@@ -66,10 +66,10 @@ y = y[:-val_size]
 Xval = X[-val_size:]
 yval = y[-val_size:]
 
-print("X: ", X.shape, X.dtype)
-print("y: ", y.shape, y.dtype)
-print("Xval: ", Xval.shape, Xval.dtype)
-print("yval: ", yval.shape, yval.dtype)
+# print("X: ", X.shape, X.dtype)
+# print("y: ", y.shape, y.dtype)
+# print("Xval: ", Xval.shape, Xval.dtype)
+# print("yval: ", yval.shape, yval.dtype)
 
 # --- ---
 # Define Network
@@ -80,19 +80,19 @@ class Net(nn.Module):
     def __init__(self):
         super().__init__() # just run the init of parent class (nn.Module)
         self.conv1 = nn.Conv2d(3, 32, 5) # input is 1 image, 32 output channels, 5x5 kernel / window
-        self.conv2 = nn.Conv2d(32, 64, 5) # input is 32, bc the first layer output 32. Then we say the output will be 64 channels, 5x5 kernel / window
+        #self.conv2 = nn.Conv2d(32, 64, 5) # input is 32, bc the first layer output 32. Then we say the output will be 64 channels, 5x5 kernel / window
 
         x = torch.randn(IMG_SIZE,IMG_SIZE,3).view(-1,3,IMG_SIZE,IMG_SIZE)
         self._to_linear = None
         self.convs(x)
 
-        self.fc1 = nn.Linear(self._to_linear, 512) #flattening.
-        self.fc2 = nn.Linear(512, class_num) # 512 in, 2 out bc we're doing 2 classes (dog vs cat).
+        self.fc1 = nn.Linear(self._to_linear, 150) #flattening.
+        self.fc2 = nn.Linear(150, class_num) # 512 in, 2 out bc we're doing 2 classes (dog vs cat).
 
     def convs(self, x):
         # max pooling over 2x2
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        x = F.max_pool2d(F.relu(self.conv2(x)), (2, 2))
+        #x = F.max_pool2d(F.relu(self.conv2(x)), (2, 2))
 
         if self._to_linear is None:
             self._to_linear = x[0].shape[0]*x[0].shape[1]*x[0].shape[2]
@@ -113,7 +113,7 @@ optimizer = optim.Adam(net.parameters(), lr=0.01)
 loss_function = nn.CrossEntropyLoss()
 
 BATCH_SIZE = 100
-EPOCHS = 3
+EPOCHS = 20
 batch_train_log = []
 train_log = []
 training_start = datetime.datetime.now()
@@ -183,3 +183,18 @@ for epoch in range(EPOCHS):
     print("In-sample accuracy: ", isample, "  Out-of-sample accuracy: ", osample)
 
 print(train_log)
+
+dtime = str(datetime.datetime.now()).replace(":", "-")
+
+pickle_in = open("log.pickle","rb")
+log_out = pickle.load(pickle_in)
+
+logt = np.array(train_log)
+outs = []
+for i in range(len(logt[:, 0])):
+    outs.append([logt[i, 0], logt[i, 1]])
+log_out.append([outs, [20, 100, seed], ["PC-13-1", 0, dtime]])
+
+pickle_out = open("log.pickle","wb")
+pickle.dump(log_out, pickle_out)
+pickle_out.close()
